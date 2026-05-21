@@ -1,0 +1,9 @@
+name: MC-AHelp
+description: $description
+version: '${version}'
+
+main: io.github.dewsmith0.mcahelp.MCAhelp
+api-version: '1.21.11'
+load: STARTUP
+
+authors: [ Dewsmith ]
