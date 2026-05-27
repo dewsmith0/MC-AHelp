@@ -29,7 +29,8 @@ public class DatabaseManager {
                       `player_uuid` CHAR(36) NOT NULL,
                       `sender_uuid` CHAR(36) NOT NULL,
                       `message` VARCHAR(512) NULL DEFAULT "",
-                      `message_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                      `message_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                      `is_staff` BOOLEAN(1) DEFAULT 0
                     )""").execute();
         } catch (SQLException e) {
             MCAhelp.getPlugin(MCAhelp.class).getLogger().severe("Failed to init database!");
