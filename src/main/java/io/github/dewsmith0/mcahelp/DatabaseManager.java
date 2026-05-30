@@ -1,18 +1,21 @@
 package io.github.dewsmith0.mcahelp;
 
+import org.bukkit.plugin.java.JavaPlugin;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseManager {
     private static Connection connection;
+    private static final MCAhelp plugin = JavaPlugin.getPlugin(MCAhelp.class);
 
     public void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection("jdbc:sqlite:plugins/MC-AHelp/database.db");
         } catch (ClassNotFoundException | SQLException e) {
-            MCAhelp.getPlugin(MCAhelp.class).getLogger().severe("Failed to load AHelp database!");
+            plugin.logError("Failed to load AHelp database!", e);
         } finally {
             initializeDatabase();
         }
@@ -30,11 +33,12 @@ public class DatabaseManager {
                       `sender_uuid` CHAR(36) NOT NULL,
                       `message` VARCHAR(512) NULL DEFAULT "",
                       `message_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                      `is_staff` BOOLEAN(1) DEFAULT 0
+                      `is_staff` BOOLEAN(1) DEFAULT 0,
+                      `should_notify` BOOLEAN(1) DEFAULT 0,
+                      `bwoinked` BOOLEAN(1) DEFAULT 0
                     )""").execute();
         } catch (SQLException e) {
-            MCAhelp.getPlugin(MCAhelp.class).getLogger().severe("Failed to init database!");
-            MCAhelp.getPlugin(MCAhelp.class).getLogger().severe(e.getMessage());
+            plugin.logError("Failed to init AHelp database!", e);
         }
     }
 }

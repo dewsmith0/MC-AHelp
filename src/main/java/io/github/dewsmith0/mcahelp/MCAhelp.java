@@ -1,21 +1,22 @@
 package io.github.dewsmith0.mcahelp;
 
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.logging.Logger;
+
 public final class MCAhelp extends JavaPlugin {
-    private static final Logger log = LogManager.getLogger(MCAhelp.class);
+    public final Logger log = this.getLogger();
     private DatabaseManager db;
     @Override
     public void onEnable() {
+        db = new DatabaseManager();
+        db.connect();
         this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
             commands.registrar().register(AhelpCommand.createCommand("ahelp"));
         });
+        getServer().getPluginManager().registerEvents(new AhelpEvents(), this);
         getLogger().info(String.format("Location: %s", getDataFolder().getAbsolutePath()));
-       db = new DatabaseManager();
-       db.connect();
     }
 
     @Override
@@ -26,7 +27,7 @@ public final class MCAhelp extends JavaPlugin {
         return db;
     }
 
-    public void logError(String error) {
-        getLogger().severe(error);
+    public void logError(String errorExplanation, Exception exception) {
+        log.severe(String.join(errorExplanation, exception.getMessage()));
     }
 }

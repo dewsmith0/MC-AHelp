@@ -40,7 +40,7 @@ public class AhelpDialog {
         DialogBase base = createBaseDialog(player, limit, Component.text("Admin Help"), false);
         if (base == null) return null;
         List<ActionButton> buttons = getButtons(false, null);
-
+        AhelpHistory.clearNotifications(player);
         return Dialog.create(builder -> builder.empty()
                 .base(base)
                 .type(DialogType.confirmation(buttons.getFirst(), buttons.getLast())));

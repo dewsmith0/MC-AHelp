@@ -5,39 +5,39 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
+import org.jspecify.annotations.NonNull;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class AhelpHistory {
     private static final MCAhelp plugin = MCAhelp.getPlugin(MCAhelp.class);
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final MiniMessage mm = MiniMessage.miniMessage();
 
-    public static void addLog(OfflinePlayer player, Player sender, String message, boolean isStaff) {
+    public static void addLog(AhelpEntry entry) {
+        plugin.log.info(entry.toString());
         try (Connection connection = plugin.getDatabase().getConnection()) {
             String sql = """
                     INSERT INTO ahelp_logs (
-                        player_uuid, sender_uuid, message, is_staff
-                    ) VALUES (?, ?, ?, ?);
+                        player_uuid, sender_uuid, message, is_staff, should_notify, bwoinked
+                    ) VALUES (?, ?, ?, ?, ?, ?);
                     """;
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, player.getUniqueId().toString());
-            statement.setString(2, sender.getUniqueId().toString());
-            statement.setString(3, message.strip());
-            statement.setBoolean(4, isStaff);
+            statement.setString(1, entry.playerUuid.toString());
+            statement.setString(2, entry.senderUuid.toString());
+            statement.setString(3, entry.message.strip());
+            statement.setBoolean(4, entry.isStaff);
+            statement.setBoolean(5, entry.shouldNotify);
+            statement.setBoolean(6, entry.bwoinked);
             statement.execute();
         } catch (SQLException e) {
-            plugin.logError(String.format("Failed to add ahelp log for %s -> %s: %s", sender.getUniqueId(), player.getUniqueId(), message));
-            plugin.logError(e.getMessage());
+            plugin.logError(String.format("Failed to add ahelp log for %s", entry.playerUuid), e);
         }
     }
     public static ArrayList<AhelpEntry> getLogs(OfflinePlayer player, int limit) {
@@ -45,11 +45,14 @@ public class AhelpHistory {
             PreparedStatement statement = connection.prepareStatement("""
                     SELECT * FROM ahelp_logs
                     WHERE player_uuid = ?
-                    ORDER BY message_date ASC
-                    LIMIT ?;
+                    ORDER BY message_date DESC
+                    LIMIT ?
+                    OFFSET ?;
                     """);
             statement.setString(1, player.getUniqueId().toString());
             statement.setInt(2, limit);
+            statement.setInt(3, 0);
+            //TODO: page system (use offset)
             ResultSet result = statement.executeQuery();
             ArrayList<AhelpEntry> output = new ArrayList<>();
             while(result.next()) {
@@ -58,12 +61,15 @@ public class AhelpHistory {
                 String message = result.getString("message");
                 Date timestamp = result.getDate("message_date");
                 boolean isStaff = result.getBoolean("is_staff");
-                AhelpEntry entry = new AhelpEntry(playerUuid, senderUuid, message, timestamp, isStaff);
+                boolean shouldNotify = result.getBoolean("should_notify");
+                boolean bwoinked = result.getBoolean("bwoinked");
+                AhelpEntry entry = new AhelpEntry(playerUuid, senderUuid, message, timestamp, isStaff, shouldNotify, bwoinked);
                 output.add(entry);
             }
+            Collections.reverse(output);
             return output;
         } catch (SQLException e) {
-            plugin.logError(String.format("Failed to get ahelp logs for %s: %s", player.getUniqueId(), e.getMessage()));
+            plugin.logError(String.format("Failed to get ahelp logs for %s", player.getUniqueId()), e);
             return null;
         }
     }
@@ -75,8 +81,9 @@ public class AhelpHistory {
             if (senderName == null) {
                 senderName = "<ERROR>";
             }
-            Component formattedLog = mm.deserialize("<gray>[<date>]</gray> <sender><reset>: <message>",
+            Component formattedLog = mm.deserialize("<gray>[<date>] <silent></gray> <sender><reset>: <message>",
                     Placeholder.unparsed("date", formattedDate),
+                    Placeholder.unparsed("silent", entry.bwoinked() ? "" : "(S)"),
                     Placeholder.component("sender", Component.text(senderName, entry.isStaff() ? NamedTextColor.GREEN : NamedTextColor.WHITE)),
                     Placeholder.unparsed("message", entry.message()));
 
@@ -84,6 +91,55 @@ public class AhelpHistory {
         }
         return output;
     }
-    public record AhelpEntry(UUID playerUuid, UUID senderUuid, String message, Date timestamp, boolean isStaff) { }
+    public static List<AhelpEntry> getNotifications(OfflinePlayer player) {
+        ArrayList<AhelpEntry> notifications = new ArrayList<>();
+        try (Connection connection = plugin.getDatabase().getConnection()) {
+            PreparedStatement statement = connection.prepareStatement("""
+                    SELECT * FROM ahelp_logs
+                    WHERE player_uuid = ?
+                    AND should_notify = 1
+                    ORDER BY message_date DESC;
+                    """);
+            statement.setString(1, player.getUniqueId().toString());
+            ResultSet result = statement.executeQuery();
+            while(result.next()) {
+                UUID playerUuid = UUID.fromString(result.getString("player_uuid"));
+                UUID senderUuid = UUID.fromString(result.getString("sender_uuid"));
+                String message = result.getString("message");
+                Date timestamp = result.getDate("message_date");
+                boolean isStaff = result.getBoolean("is_staff");
+                boolean shouldNotify = result.getBoolean("should_notify");
+                boolean bwoinked = result.getBoolean("bwoinked");
+                notifications.add(new AhelpEntry(playerUuid, senderUuid, message, timestamp, isStaff, shouldNotify, bwoinked));
+            }
+        } catch (SQLException e) {
+            plugin.logError(String.format("Failed to get pending notifications for %s ", player.getUniqueId()), e);
+            return null;
+        }
+        return notifications;
+    }
+    public static void clearNotifications(OfflinePlayer player) {
+        try (Connection connection = plugin.getDatabase().getConnection()) {
+            List<AhelpEntry> notifications = getNotifications(player);
+            if (notifications != null && !notifications.isEmpty()) {
+                PreparedStatement statement = connection.prepareStatement("""
+                        UPDATE ahelp_logs
+                        SET should_notify = 0
+                        WHERE player_uuid = ?;
+                        """);
+                statement.setString(1, player.getUniqueId().toString());
+                statement.execute();
+                plugin.log.info(String.format("Cleared notifications for %s", player.getName()));
+            }
+        } catch (SQLException e) {
+           plugin.logError(String.format("Failed to clear notifications for %s ", player.getUniqueId()), e);
+        }
+    }
+    public record AhelpEntry(UUID playerUuid, UUID senderUuid, String message, java.sql.Date timestamp, boolean isStaff, boolean shouldNotify, boolean bwoinked) {
+        @Override
+        public @NonNull String toString() {
+            return String.format("%s%s%s -> %s: %s", bwoinked ? "" : "(S)", isStaff ? "*" : "", senderUuid, playerUuid, message);
+        }
+    }
 }
 
