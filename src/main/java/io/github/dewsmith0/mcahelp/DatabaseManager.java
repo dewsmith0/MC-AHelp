@@ -9,6 +9,7 @@ import java.sql.SQLException;
 public class DatabaseManager {
     private static Connection connection;
     private static final MCAhelp plugin = JavaPlugin.getPlugin(MCAhelp.class);
+    private boolean initialized = false;
 
     public void connect() {
         try {
@@ -17,7 +18,10 @@ public class DatabaseManager {
         } catch (ClassNotFoundException | SQLException e) {
             plugin.logError("Failed to load AHelp database!", e);
         } finally {
-            initializeDatabase();
+            if(!initialized) {
+                initializeDatabase();
+                initialized = true;
+            }
         }
     }
     public Connection getConnection() {

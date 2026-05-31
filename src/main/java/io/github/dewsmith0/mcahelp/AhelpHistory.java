@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class AhelpHistory {
+    public static final int MESSAGES_PER_PAGE = 20;
     private static final MCAhelp plugin = MCAhelp.getPlugin(MCAhelp.class);
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final MiniMessage mm = MiniMessage.miniMessage();
@@ -40,19 +41,17 @@ public class AhelpHistory {
             plugin.logError(String.format("Failed to add ahelp log for %s", entry.playerUuid), e);
         }
     }
-    public static ArrayList<AhelpEntry> getLogs(OfflinePlayer player, int limit) {
+    public static ArrayList<AhelpEntry> getLogs(OfflinePlayer player, int page) {
         try (Connection connection = plugin.getDatabase().getConnection()){
             PreparedStatement statement = connection.prepareStatement("""
                     SELECT * FROM ahelp_logs
                     WHERE player_uuid = ?
                     ORDER BY message_date DESC
-                    LIMIT ?
+                    LIMIT 20
                     OFFSET ?;
                     """);
             statement.setString(1, player.getUniqueId().toString());
-            statement.setInt(2, limit);
-            statement.setInt(3, 0);
-            //TODO: page system (use offset)
+            statement.setInt(2, (page-1)*MESSAGES_PER_PAGE);
             ResultSet result = statement.executeQuery();
             ArrayList<AhelpEntry> output = new ArrayList<>();
             while(result.next()) {
@@ -134,6 +133,22 @@ public class AhelpHistory {
         } catch (SQLException e) {
            plugin.logError(String.format("Failed to clear notifications for %s ", player.getUniqueId()), e);
         }
+    }
+    public static Integer countPages(UUID playerUuid) {
+        try (Connection connection = plugin.getDatabase().getConnection()) {
+            PreparedStatement statement = connection.prepareStatement("""
+                    SELECT COUNT(*)
+                    FROM ahelp_logs
+                    WHERE player_uuid = ?;
+                    """);
+            statement.setString(1, playerUuid.toString());
+            int resultCount = statement.executeQuery().getInt(1);
+            return ((resultCount - 1) / MESSAGES_PER_PAGE + 1);
+        } catch(SQLException e) {
+            plugin.logError(String.format("Failed to count pages for %s", playerUuid), e);
+            return null;
+        }
+
     }
     public record AhelpEntry(UUID playerUuid, UUID senderUuid, String message, java.sql.Date timestamp, boolean isStaff, boolean shouldNotify, boolean bwoinked) {
         @Override

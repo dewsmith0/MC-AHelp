@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AhelpDialog {
-    private static DialogBase createBaseDialog(OfflinePlayer targetPlayer, int limit, Component title, boolean isAdmin) {
-        ArrayList<AhelpHistory.AhelpEntry> entries = AhelpHistory.getLogs(targetPlayer, limit);
+    private static DialogBase createBaseDialog(OfflinePlayer targetPlayer, int page, Component title, boolean isAdmin) {
+        ArrayList<AhelpHistory.AhelpEntry> entries = AhelpHistory.getLogs(targetPlayer, page);
         List<DialogBody> body = new ArrayList<>();
         List<DialogInput> inputs = new ArrayList<>();
         if (entries == null) {
@@ -36,8 +36,9 @@ public class AhelpDialog {
         return DialogBase.create(title, null, true, false, DialogBase.DialogAfterAction.CLOSE, body, inputs);
     }
 
-    public static Dialog createPlayerDialog(OfflinePlayer player, int limit) {
-        DialogBase base = createBaseDialog(player, limit, Component.text("Admin Help"), false);
+    public static Dialog createPlayerDialog(OfflinePlayer player, int page) {
+        Integer pageCount = AhelpHistory.countPages(player.getUniqueId());
+        DialogBase base = createBaseDialog(player, page, Component.text(String.format("Admin Help (page %d/%d)", page, pageCount)), false);
         if (base == null) return null;
         List<ActionButton> buttons = getButtons(false, null);
         AhelpHistory.clearNotifications(player);
@@ -46,8 +47,9 @@ public class AhelpDialog {
                 .type(DialogType.confirmation(buttons.getFirst(), buttons.getLast())));
     }
 
-    public static Dialog createAdminDialog(OfflinePlayer target, int limit) {
-        DialogBase base = createBaseDialog(target, limit, Component.text(String.format("Admin Help for: %s", target.getName())), true);
+    public static Dialog createAdminDialog(OfflinePlayer target, int page) {
+        Integer pageCount = AhelpHistory.countPages(target.getUniqueId());
+        DialogBase base = createBaseDialog(target, page, Component.text(String.format("Admin Help for: %s (page %d/%d)", target.getName(), page, pageCount)), true);
         if (base == null) return null;
         List<ActionButton> buttons = getButtons(true, target);
         return Dialog.create(builder -> builder.empty()
