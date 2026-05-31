@@ -107,9 +107,10 @@ public class AhelpCommand {
             sender.sendMessage(Component.text("Failed to get profile!", NamedTextColor.RED));
             return Command.SINGLE_SUCCESS;
         }
-        Integer page;
+        int page;
         try {
-            page = ctx.getArgument("page", Integer.class);
+            Integer totalPages = AhelpHistory.countPages(targetUuid);
+            page = Math.clamp(ctx.getArgument("page", int.class), 1, totalPages != null ? totalPages : 1);
         } catch (IllegalArgumentException e) {
             page = 1;
         }
