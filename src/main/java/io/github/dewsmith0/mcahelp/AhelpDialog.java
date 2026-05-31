@@ -31,7 +31,7 @@ public class AhelpDialog {
         if (isAdmin) {
             inputs.add(DialogInput.bool("bwoink", Component.text("''Bwoink''?")).build());
         }
-        body.add(DialogBody.plainMessage(Component.join(JoinConfiguration.newlines(), AhelpHistory.parseLogs(entries))));
+        body.add(DialogBody.plainMessage(Component.join(JoinConfiguration.newlines(), AhelpHistory.parseLogs(entries)), 400));
 
         return DialogBase.create(title, null, true, false, DialogBase.DialogAfterAction.CLOSE, body, inputs);
     }

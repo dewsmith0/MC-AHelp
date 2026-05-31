@@ -21,9 +21,12 @@ public class AhelpSender {
         AhelpHistory.addLog(new AhelpHistory.AhelpEntry(
                 sender.getUniqueId(), sender.getUniqueId(), message,
                 null,false, false, false));
+        sender.sendMessage(formattedMessage);
         for (Player player : plugin.getServer().getOnlinePlayers().stream().filter(
                 player -> player.hasPermission(AhelpPermissions.RECEIVE_ADMIN)).toList()) {
-            player.sendMessage(formattedMessage);
+            if  (player != sender) {
+                 player.sendMessage(formattedMessage);
+            }
         }
     }
 
