@@ -80,9 +80,9 @@ public class AhelpHistory {
             if (senderName == null) {
                 senderName = "<ERROR>";
             }
-            Component formattedLog = mm.deserialize("<gray>[<date>] <silent></gray> <sender><reset>: <message>",
+            Component formattedLog = mm.deserialize("<gray>[<date>] <silent></gray><sender><reset>: <message>",
                     Placeholder.unparsed("date", formattedDate),
-                    Placeholder.unparsed("silent", entry.bwoinked() ? "" : "(S)"),
+                    Placeholder.unparsed("silent", entry.bwoinked() || !entry.isStaff? "" : "(S) "),
                     Placeholder.component("sender", Component.text(senderName, entry.isStaff() ? NamedTextColor.GREEN : NamedTextColor.WHITE)),
                     Placeholder.unparsed("message", entry.message()));
 
@@ -153,7 +153,7 @@ public class AhelpHistory {
     public record AhelpEntry(UUID playerUuid, UUID senderUuid, String message, java.sql.Date timestamp, boolean isStaff, boolean shouldNotify, boolean bwoinked) {
         @Override
         public @NonNull String toString() {
-            return String.format("%s%s%s -> %s: %s", bwoinked ? "" : "(S)", isStaff ? "*" : "", senderUuid, playerUuid, message);
+            return String.format("%s%s%s -> %s: %s", bwoinked || !isStaff ? "" : "(S) ", isStaff ? "*" : "", senderUuid, playerUuid, message);
         }
     }
 }
