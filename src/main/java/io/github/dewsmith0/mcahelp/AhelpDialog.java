@@ -10,13 +10,16 @@ import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickCallback;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AhelpDialog {
+    private static final MCAhelp plugin = JavaPlugin.getPlugin(MCAhelp.class);
     private static DialogBase createBaseDialog(OfflinePlayer targetPlayer, int page, Component title, boolean isAdmin) {
         ArrayList<AhelpHistory.AhelpEntry> entries = AhelpHistory.getLogs(targetPlayer, page);
         List<DialogBody> body = new ArrayList<>();
@@ -74,7 +77,11 @@ public class AhelpDialog {
                                 }
                             } else {
                                 if (audience instanceof Player viewer && message != null) {
-                                    AhelpSender.sendAhelpToAdmins(viewer, message);
+                                    if (plugin.rateLimits.get(viewer.getUniqueId()).tryInvoke()) {
+                                        AhelpSender.sendAhelpToAdmins(viewer, message);
+                                    } else {
+                                        viewer.sendMessage(Component.text("[AHelp] You are sending messages too quickly!", NamedTextColor.RED));
+                                    }
                                 }
                             }
                         },

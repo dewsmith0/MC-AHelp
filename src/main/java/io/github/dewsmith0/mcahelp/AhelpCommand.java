@@ -74,7 +74,11 @@ public class AhelpCommand {
             return Command.SINGLE_SUCCESS;
         }
         String message = ctx.getArgument("message", String.class);
-        AhelpSender.sendAhelpToAdmins((Player) sender, message);
+        if (plugin.rateLimits.get(((Player) sender).getUniqueId()).tryInvoke()) {
+            AhelpSender.sendAhelpToAdmins((Player) sender, message);
+        } else {
+            sender.sendMessage(Component.text("[AHelp] You are sending messages too quickly!", NamedTextColor.RED));
+        }
 
         return Command.SINGLE_SUCCESS;
     }

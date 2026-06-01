@@ -36,6 +36,7 @@ public class AhelpEvents implements Listener {
                 player.sendMessage(log);
             }
         }
+        plugin.rateLimits.put(player.getUniqueId(), new AhelpRateLimit(5));
     }
 
 }
