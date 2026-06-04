@@ -50,11 +50,13 @@ public class AhelpSender {
             target.getPlayer().sendMessage(formattedMessage);
             shouldNotify = false;
             if (bwoink) {
-                for (int i = 0; i < 8; i++) {
-                    target.getPlayer().playSound(Sound.sound(Key.key("entity.player.splash.high_speed"), Sound.Source.MASTER, 2, 1), Sound.Emitter.self());
+                for (int i = 0; i < Config.bwoinkStackCount; i++) {
+                    target.getPlayer().playSound(Sound.sound(Key.key(Config.bwoinkSoundId),Sound.Source.MASTER, Config.bwoinkVolume, Config.bwoinkPitch), Sound.Emitter.self());
                 }
             }
-
+        } else if (!Config.offlineAhelpsEnabled) {
+            sender.sendMessage(Component.text("Could not send this message, as the player is currently offline, and the server administrator has disabled offline AHelps.", NamedTextColor.RED));
+            return;
         } else {
             shouldNotify = true;
             sender.sendMessage(Component.text("This player is currently offline, and will be notified the next time they join.", NamedTextColor.YELLOW));

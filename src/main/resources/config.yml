@@ -1,0 +1,33 @@
+offline-ahelps:
+  # Whether to allow admins to send ahelps to offline players, which will notify them on next join
+  # Default: true | Type: boolean
+  enabled: true
+  # The maximum number of offline ahelps to show when joining.
+  # Default: 5 | Type: boolean | Range: 0+
+  max-notifications: 5
+
+rate-limit:
+  # Whether to rate limit ahelps from players. Does not affect /ahelp asend.
+  # Default: true | Type: boolean
+  enabled: true
+  # How many ahelps should players be able to send in [rate-limit-window] seconds?
+  # Default: 4 | Type: int | Range: 1 to 100
+  threshold: 4
+  # How long (in ms) should ahelps from players count towards the ratelimit?
+  # Default: 3000 (3 seconds) | Type: long | Range: 0+
+  window: 3000
+
+bwoink:
+  # The ID of the Minecraft sound to play when bwoinking a player (can be a custom resource pack sound ID)
+  # Default: minecraft:entity.player.splash.high_speed | Type: string
+  sound-id: minecraft:entity.player.splash.high_speed
+  # How many times to "stack" the bwoink sound, to make it louder
+  # Don't set it too high! Higher values get loud quickly
+  # Default: 8 | Type: int | Range: 1 to 15
+  stack-count: 8
+  # The volume of the bwoink sound.
+  # Default: 1 | Type: double | Range: 0.0 to 1.0
+  volume: 1.0
+  # The pitch of the bwoink sound.
+  # Default: 1 | Type: double | Range: 0.5 to 2.0
+  pitch: 1

@@ -17,6 +17,8 @@ public class AhelpEvents implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        plugin.rateLimits.put(player.getUniqueId(), new AhelpRateLimit(Config.rateLimitThreshold));
+        if (!Config.offlineAhelpsEnabled) return;
         List<AhelpHistory.AhelpEntry> notifications = AhelpHistory.getNotifications(player);
         if (notifications == null) {
             plugin.log.warning(String.format("Failed to get notifications for %s", player.getName()));
@@ -27,16 +29,16 @@ public class AhelpEvents implements Listener {
         List<Component> parsedLogs = AhelpHistory.parseLogs(notifications);
         if (!parsedLogs.isEmpty()) {
             player.sendMessage(MiniMessage.miniMessage().deserialize(
-                    "<yellow>You have <green><count></green> new AHelp message<plural>. Use <green>/ahelp</green> to view all new messages and clear this alert." +
-                            "<br>The last few messages are shown below.</yellow>",
+                    "<yellow>You have <green><count></green> new AHelp <message>. Use <green>/ahelp</green> to view all new messages and clear this alert.<preview></yellow>",
                     Placeholder.unparsed("count", String.valueOf(parsedLogs.size())),
-                    Placeholder.unparsed("plural", parsedLogs.size() > 1 ? "s" : "")
+                    Placeholder.unparsed("message", parsedLogs.size() > 1 ? "messages" : "message"),
+                    Placeholder.parsed("preview", Config.maxNotifications > 0 ? "<br>The last few messages are shown below." : "")
             ));
-            for (Component log : parsedLogs.subList(Math.max(parsedLogs.size() - 5, 0), parsedLogs.size())) {
-                player.sendMessage(log);
+            if (Config.maxNotifications > 0) {
+                for (Component log : parsedLogs.subList(Math.max(parsedLogs.size() - Config.maxNotifications, 0), parsedLogs.size())) {
+                    player.sendMessage(log);
+                }
             }
         }
-        plugin.rateLimits.put(player.getUniqueId(), new AhelpRateLimit(5));
     }
-
 }

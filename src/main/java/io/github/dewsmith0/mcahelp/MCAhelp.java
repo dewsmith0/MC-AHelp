@@ -15,8 +15,13 @@ public final class MCAhelp extends JavaPlugin {
     public void onEnable() {
         db = new DatabaseManager();
         db.connect();
-        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands ->
-                commands.registrar().register(AhelpCommand.createCommand("ahelp")));
+        Config.load();
+        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+            commands.registrar().register(AhelpCommand.createCommand("ahelp"));
+            commands.registrar().register(ManageCommand.createCommand("mc-ahelp"));
+
+        });
+
         getServer().getPluginManager().registerEvents(new AhelpEvents(), this);
         getLogger().info(String.format("Location: %s", getDataFolder().getAbsolutePath()));
     }
