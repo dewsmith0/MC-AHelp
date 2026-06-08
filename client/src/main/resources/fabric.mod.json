@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "ahelp-client",
+  "version": "${version}",
+  "name": "MC-AHelp Client",
+  "description": "Client component for MC-AHelp",
+  "authors": [],
+  "contact": {},
+  "license": "GPL-3.0",
+  "icon": "assets/ahelp-client/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "io.github.dewsmith0.mcahelp.client.AhelpClient"
+    ]
+  },
+  "mixins": [
+    "ahelp-client.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": "1.21.11"
+  }
+}

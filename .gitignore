@@ -5,6 +5,9 @@
 .gradle
 
 # Gradle build folder
+server/build
+client/build
+proto/build
 build
 
 # IntelliJ
@@ -18,4 +21,7 @@ out/
 hs_err_pid*
 
 # Common working directory
+server/run
+client/run
+proto/run
 run
